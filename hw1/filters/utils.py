@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+
 plt.ion()
 
 
@@ -65,3 +66,10 @@ def plot_circle(ax, xy, radius, edgecolor='k', facecolor='w', **kwargs):
         facecolor=facecolor,
         **kwargs)
     ax.add_artist(circle)
+
+def smul(lst):
+    dim = lst[0].shape[0]
+    T = np.eye(dim,dim)
+    for matrix in lst:
+        T = T.dot(matrix)
+    return T

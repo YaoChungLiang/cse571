@@ -64,9 +64,9 @@ class Field:
         # YOUR IMPLEMENTATION HERE
         V = np.zeros([3,3])
         V[0,0] = -trans*np.sin(prev_theta+rot1)
-        V[0,1] = cos(prev_theta+rot1)
+        V[0,1] = np.cos(prev_theta+rot1)
         V[1,0] = trans*np.cos(prev_theta+rot1)
-        V[1,1] = sin(prev_theta+rot1)
+        V[1,1] = np.sin(prev_theta+rot1)
         V[0,2], V[2,2] = 1, 1
         return V
 
@@ -74,6 +74,14 @@ class Field:
         """Compute the Jacobian of the observation with respect to the state."""
         prev_x, prev_y, prev_theta = x.ravel()
         # YOUR IMPLEMENTATION HERE
+        # Check pre-condition of Jacobian of h(x,y,theta)
+        dx = self.MARKER_X_POS[marker_id] - x[0]
+        dy = self.MARKER_Y_POS[marker_id] - x[1]
+        H = np.zeros([1,3])
+        H[0,0] = - dy / (dx**2 + dy**2) * (-1)
+        H[0,1] = dx / (dx**2 + dy**2) * (-1)
+        H[0,2] = -1
+        return H
 
     def forward(self, x, u):
         """Compute next state, given current state and action.
@@ -96,6 +104,10 @@ class Field:
 
     def get_marker_id(self, step):
         """Compute the landmark ID at a given timestep."""
+        """ 
+            Why we can use this to compute the landmark id ???? 
+            Or it's just a random choice ?
+        """
         return ((step // 2) % self.NUM_MARKERS) + 1
 
     def observe(self, x, marker_id):
@@ -198,3 +210,5 @@ class Field:
             action_noisefree,
             obs_noisefree, obs_real
         )
+
+
