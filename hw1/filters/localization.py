@@ -107,9 +107,6 @@ if __name__ == '__main__':
     args = setup_parser().parse_args()
     print('Data factor:', args.data_factor)
     print('Filter factor:', args.filter_factor)
-    # print('Filter type:', args.filter_type)
-    # print('arg:', args)
-    # print('Data factor:', args.data_factor)
 
     if args.seed is not None:
         np.random.seed(args.seed)

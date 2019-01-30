@@ -1,5 +1,5 @@
 import numpy as np
-
+import scipy.stats as st
 from utils import minimized_angle
 
 
@@ -29,10 +29,44 @@ class ParticleFilter:
         marker_id: landmark ID
         """
         # YOUR IMPLEMENTATION HERE
+
+        # resampling from motion model
+        ## --- forward motion model to get new particles
+        flag = 2
+        new_particles = np.zeros((self.num_particles, 3))
+        if flag == 1:
+            for i in range(self.num_particles):
+                new_particles[i, :] = env.forward(self.particles[i, :], u).ravel()
+            new_mean, new_cov = self.mean_and_variance(new_particles)
+            ## --- importance sampling from new distribution after forward
+            for i in range(self.num_particles):
+                self.particles[i, :] = np.random.multivariate_normal(
+                    new_mean.ravel(), new_cov)
+                zt = env.observe(self.particles[i, :], marker_id)
+                # self.weights[i] = st.norm(0, self.beta).pdf(zt.ravel()-z.ravel())
+                self.weights[i] = env.likelihood(zt.ravel()-z.ravel(), self.beta)
+        if flag == 2:
+            for i in range(self.num_particles):
+                self.particles[i, :] = env.forward(self.particles[i, :], u).ravel()
+                zt = env.observe(self.particles[i, :], marker_id)
+                # self.weights[i] = st.norm(0, self.beta).pdf(zt.ravel()-z.ravel())
+                self.weights[i] = env.likelihood(zt.ravel()-z.ravel(), self.beta)    
+            self.weights += 1.e-300
+
+        # print("hi\n", self.particles)
+        # normalizer
+        self.weights = self.weights / self.weights.sum()
+
+        # resampling
+        if self.neff(self.weights) < self.num_particles/2:
+            self.particles, self.weights = self.resample1(self.particles, self.weights)
         mean, cov = self.mean_and_variance(self.particles)
         return mean, cov
 
-    def resample(self, particles, weights):
+    def neff(self, weights):
+        return 1. / np.sum(np.square(weights))
+
+    def resample1(self, particles, weights):
         """Sample new particles and weights given current particles and weights. Be sure
         to use the low-variance sampler from class.
 
@@ -41,6 +75,30 @@ class ParticleFilter:
         """
         new_particles, new_weights = particles, weights
         # YOUR IMPLEMENTATION HERE
+        r = np.random.uniform(0, 1/self.num_particles) 
+        print(r)
+        c = weights[0]
+        i = 0
+        for k in range(self.num_particles):
+            U = r + k / self.num_particles
+            while U > c:
+                i += 1
+                c += weights[i]
+            new_particles[k, :] = particles[i, :]
+            new_weights[k] = weights[i]
+        new_weights = new_weights / new_weights.sum()
+        return new_particles, new_weights
+
+    def resample2(self, particles, weights):
+        new_particles, new_weights = particles, weights
+        cumulative_sum = np.cumsum(self.weights)
+        cumulative_sum[-1] = 1. # avoid round-off error
+        indexes = np.searchsorted(cumulative_sum, np.random.uniform(low=0.0, high=1.0, size=self.num_particles))
+        
+        # resample according to indexes
+        new_particles = particles[indexes]
+        new_weights = weights[indexes]
+        new_weights /= np.sum(new_weights) # normalize
         return new_particles, new_weights
 
     def mean_and_variance(self, particles):
@@ -54,6 +112,7 @@ class ParticleFilter:
             np.cos(particles[:, 2]).sum(),
             np.sin(particles[:, 2]).sum()
         )
+        # why do we need do this????
 
         zero_mean = particles - mean
         for i in range(zero_mean.shape[0]):
