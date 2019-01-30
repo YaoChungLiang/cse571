@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.stats as st
 from utils import minimized_angle
 
 
@@ -33,27 +32,13 @@ class ParticleFilter:
         # resampling from motion model
         ## --- forward motion model to get new particles
         flag = 2
-        new_particles = np.zeros((self.num_particles, 3))
-        if flag == 1:
-            for i in range(self.num_particles):
-                new_particles[i, :] = env.forward(self.particles[i, :], u).ravel()
-            new_mean, new_cov = self.mean_and_variance(new_particles)
-            ## --- importance sampling from new distribution after forward
-            for i in range(self.num_particles):
-                self.particles[i, :] = np.random.multivariate_normal(
-                    new_mean.ravel(), new_cov)
-                zt = env.observe(self.particles[i, :], marker_id)
-                # self.weights[i] = st.norm(0, self.beta).pdf(zt.ravel()-z.ravel())
-                self.weights[i] = env.likelihood(zt.ravel()-z.ravel(), self.beta)
         if flag == 2:
             for i in range(self.num_particles):
-                self.particles[i, :] = env.forward(self.particles[i, :], u).ravel()
+                u_noise = env.sample_noisy_action(u, self.alphas)
+                self.particles[i, :] = env.forward(self.particles[i, :], u_noise).ravel()
                 zt = env.observe(self.particles[i, :], marker_id)
-                # self.weights[i] = st.norm(0, self.beta).pdf(zt.ravel()-z.ravel())
                 self.weights[i] = env.likelihood(zt.ravel()-z.ravel(), self.beta)    
             self.weights += 1.e-300
-
-        # print("hi\n", self.particles)
         # normalizer
         self.weights = self.weights / self.weights.sum()
 
@@ -73,10 +58,14 @@ class ParticleFilter:
         particles: (n x 3) matrix of poses
         weights: (n,) array of weights
         """
-        new_particles, new_weights = particles, weights
+        # new_particles, new_weights = particles, weights 
+        ## this misled me a lot !!!! be careful about reference in Python !!!shit.
+        # new_particles = np.zeros([self.num_particles, 3])
+        # new_weights = np.zeros(self.num_particles)
+        particles_lst = []
+        weights_lst = []
         # YOUR IMPLEMENTATION HERE
         r = np.random.uniform(0, 1/self.num_particles) 
-        print(r)
         c = weights[0]
         i = 0
         for k in range(self.num_particles):
@@ -84,9 +73,15 @@ class ParticleFilter:
             while U > c:
                 i += 1
                 c += weights[i]
-            new_particles[k, :] = particles[i, :]
-            new_weights[k] = weights[i]
+            particles_lst.append(particles[i, :])
+            weights_lst.append(weights[i])
+            # new_particles[k, :] = particles[i, :]
+            # new_weights[k] = weights[i]
+        # self.num_particles = len(particles_lst) # Systematic sampling doesn't change M
+        new_particles = np.asarray(particles_lst)
+        new_weights = np.asarray(weights_lst)
         new_weights = new_weights / new_weights.sum()
+        print(self.num_particles)
         return new_particles, new_weights
 
     def resample2(self, particles, weights):

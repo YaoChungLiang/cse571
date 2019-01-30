@@ -153,7 +153,6 @@ class Field:
         """
         if alphas is None:
             alphas = self.alphas
-
         cov = self.noise_from_motion(u, alphas)
         return np.random.multivariate_normal(u.ravel(), cov).reshape((-1, 1))
 
