@@ -67,7 +67,7 @@ class Field:
         V[0,1] = np.cos(prev_theta+rot1)
         V[1,0] = trans*np.cos(prev_theta+rot1)
         V[1,1] = np.sin(prev_theta+rot1)
-        V[0,2], V[2,2] = 1, 1
+        V[2,0], V[2,2] = 1, 1
         return V
 
     def H(self, x, marker_id):
@@ -77,9 +77,10 @@ class Field:
         # Check pre-condition of Jacobian of h(x,y,theta)
         dx = self.MARKER_X_POS[marker_id] - x[0]
         dy = self.MARKER_Y_POS[marker_id] - x[1]
+        # dx, dy = minimized_angle(dx), minimized_angle(dy)
         H = np.zeros([1,3])
         H[0,0] = - dy / (dx**2 + dy**2) * (-1)
-        H[0,1] = dx / (dx**2 + dy**2) * (-1)
+        H[0,1] = dx /  (dx**2 + dy**2 ) * (-1)
         H[0,2] = -1
         return H
 

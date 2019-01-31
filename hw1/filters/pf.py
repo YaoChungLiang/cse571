@@ -31,20 +31,18 @@ class ParticleFilter:
 
         # resampling from motion model
         ## --- forward motion model to get new particles
-        flag = 2
-        if flag == 2:
-            for i in range(self.num_particles):
-                u_noise = env.sample_noisy_action(u, self.alphas)
-                self.particles[i, :] = env.forward(self.particles[i, :], u_noise).ravel()
-                zt = env.observe(self.particles[i, :], marker_id)
-                self.weights[i] = env.likelihood(zt.ravel()-z.ravel(), self.beta)    
-            self.weights += 1.e-300
+
+        for i in range(self.num_particles):
+            u_noise = env.sample_noisy_action(u, self.alphas)
+            self.particles[i, :] = env.forward(self.particles[i, :], u_noise).ravel()
+            zt = env.observe(self.particles[i, :], marker_id)
+            self.weights[i] = env.likelihood(minimized_angle(zt.ravel()-z.ravel()), self.beta)    
         # normalizer
         self.weights = self.weights / self.weights.sum()
 
         # resampling
-        if self.neff(self.weights) < self.num_particles/2:
-            self.particles, self.weights = self.resample1(self.particles, self.weights)
+        # if self.neff(self.weights) < self.num_particles/2:
+        self.particles, self.weights = self.resample1(self.particles, self.weights)
         mean, cov = self.mean_and_variance(self.particles)
         return mean, cov
 
@@ -81,7 +79,7 @@ class ParticleFilter:
         new_particles = np.asarray(particles_lst)
         new_weights = np.asarray(weights_lst)
         new_weights = new_weights / new_weights.sum()
-        print(self.num_particles)
+        # print(self.num_particles)
         return new_particles, new_weights
 
     def resample2(self, particles, weights):

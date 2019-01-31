@@ -40,12 +40,12 @@ class ExtendedKalmanFilter:
         sigma_bar = smul([Gt, self.sigma, Gt.T]) + Rt
         Ht = env.H(mu_bar, marker_id) 
         # step 3
-        tmp1 = smul([Ht, sigma_bar, Ht.T]) + Qt
-        tmp2 = np.linalg.inv(tmp1)
+        S = smul([Ht, sigma_bar, Ht.T]) + Qt
+        tmp2 = np.linalg.inv(S)
         Kt = smul([sigma_bar, Ht.T, tmp2])
         # step 4
         z_bar = env.observe(mu_bar, marker_id)  ## why ?
-        dz = z - z_bar
+        dz = minimized_angle(z - z_bar)
         mu = mu_bar + smul([Kt, dz])
         # step 5
         dim = Kt.shape[0]
