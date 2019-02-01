@@ -61,16 +61,18 @@ def localize(env, policy, filt, x0, num_steps, plot=False):
     mean_mahalanobis_error = mahalanobis_errors.mean()
     anees = mean_mahalanobis_error / 3
 
-    if filt is not None:
-        print('-' * 80)
-        print('Mean position error:', mean_position_error)
-        print('Mean Mahalanobis error:', mean_mahalanobis_error)
-        print('ANEES:', anees)
+    # if filt is not None:
+    #     print('-' * 80)
+    #     print('Mean position error:', mean_position_error)
+    #     print('Mean Mahalanobis error:', mean_mahalanobis_error)
+    #     print('ANEES:', anees)
+        
+    # print(str(mean_position_error)+",")
 
     if plot:
         plt.show(block=True)
 
-    return position_errors
+    return position_errors, mean_position_error
 
 
 def setup_parser():
@@ -101,44 +103,70 @@ def setup_parser():
 
     return parser
 
-def plot_b():
-    for i in range(10):
+def plot_function(x,y):
+    plt.plot(x,y)
+    plt.title("EKF Part b")
+    plt.xlabel("factor")
+    plt.ylabel("mean_position_error")
+    plt.show()  
 
 if __name__ == '__main__':
-    args = setup_parser().parse_args()
-    print('Data factor:', args.data_factor)
-    print('Filter factor:', args.filter_factor)
+    trial = True 
+    factor=[0.015625, 0.0625, 0.25, 4, 16, 64]
+    result = np.zeros([10,6])
+    print(factor)
+    for k in range(6):
+        print("factor is: ", factor[k])
+        for i in range(10):
+            args = setup_parser().parse_args()
+            # print('Data factor:', args.data_factor)
+            # print('Filter factor:', args.filter_factor)
+            if trial :
+                df = factor[k]
+                ff = factor[k]
+            else:
+                df = args.data_factor
+                ff = args.filter_factor
 
-    if args.seed is not None:
-        np.random.seed(args.seed)
+            if args.seed is not None:
+                np.random.seed(args.seed)
 
-    alphas = np.array([0.05**2, 0.005**2, 0.1**2, 0.01**2])
-    beta = np.diag([np.deg2rad(5)**2])
+            alphas = np.array([0.05**2, 0.005**2, 0.1**2, 0.01**2])
+            beta = np.diag([np.deg2rad(5)**2])
+            env = Field(df * alphas, df * beta)
+            policy = policies.OpenLoopRectanglePolicy()
 
-    env = Field(args.data_factor * alphas, args.data_factor * beta)
-    policy = policies.OpenLoopRectanglePolicy()
+            initial_mean = np.array([180, 50, 0]).reshape((-1, 1))
+            initial_cov = np.diag([10, 10, 1])
 
-    initial_mean = np.array([180, 50, 0]).reshape((-1, 1))
-    initial_cov = np.diag([10, 10, 1])
+            if args.filter_type == 'none':
+                filt = None
+            elif args.filter_type == 'ekf':
+                filt = ExtendedKalmanFilter(
+                    initial_mean,
+                    initial_cov,
+                    ff * alphas,
+                    ff * beta
+                )
+            elif args.filter_type == 'pf':
+                filt = ParticleFilter(
+                    initial_mean,
+                    initial_cov,
+                    args.num_particles,
+                    ff * alphas,
+                    ff * beta
+                )
+            tmp = localize(env, policy, filt, initial_mean, args.num_steps, args.plot)[1]
+            print(tmp)
+            result[i][k] = tmp
+        # break;
+    b_mean = np.average(result, axis=0)
+    # plot_function(np.array(factor),b_mean)
+    print(factor)
+    plt.plot(np.array(factor),b_mean)
+    plt.show()
 
-    if args.filter_type == 'none':
-        filt = None
-    elif args.filter_type == 'ekf':
-        filt = ExtendedKalmanFilter(
-            initial_mean,
-            initial_cov,
-            args.filter_factor * alphas,
-            args.filter_factor * beta
-        )
-    elif args.filter_type == 'pf':
-        filt = ParticleFilter(
-            initial_mean,
-            initial_cov,
-            args.num_particles,
-            args.filter_factor * alphas,
-            args.filter_factor * beta
-        )
-
+    print(b_mean)
     # You may want to edit this line to run multiple localization experiments.
-    localize(env, policy, filt, initial_mean, args.num_steps, args.plot)
-    plot_b()
+    # print(localize(env, policy, filt, initial_mean, args.num_steps, args.plot)[1])
+    

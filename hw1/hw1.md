@@ -40,7 +40,7 @@ $$
 \begin{align*}
 &\eta \\
 =& [0.6 \times (0.4c + 0.6) + 0.2 \times (0.4 - 0.4c)]^{-1}	\\
-=& \frac{1}{0.16c+0.42}
+=& \frac{1}{0.16c+0.44}
 \end{align*}
 $$
 Final Result:
@@ -48,8 +48,8 @@ $$
 \begin{align*}
 &p(x_{t+1}=\text{clean}|z_{t+1}=\text{clean}) \\
 =& \eta \times 0.6 \times (0.4c + 0.6) \\
-=& \frac{0.6 \times (0.4c + 0.6)}{0.16c+0.42}   \\
-=& \frac{0.24c + 0.36}{0.16c + 0.42}   \\
+=& \frac{0.6 \times (0.4c + 0.6)}{0.16c+0.44}   \\
+=& \frac{0.24c + 0.36}{0.16c + 0.44}   \\
 
 \end{align*}
 $$
