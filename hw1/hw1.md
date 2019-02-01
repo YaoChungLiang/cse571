@@ -233,6 +233,7 @@ Var(Y_1|Y_2)
 &= Var(Z) \\
 &= Var(Y_1+AY_2) \\
 &= Var(Y_1)+Var(AY_2|Y_2)+2Cov(Y_1,AY_2|Y_2) \\
+\color{#00F}{notice} \quad Var(AY_2|Y_2) = 0 \\
 &= \Sigma_{11} + A\Sigma_{22}A^T + 2A\Sigma_{21} \\
 &= 
 \Sigma_{11} 
@@ -247,7 +248,9 @@ $$
 $$
 Y_1 | Y_2 
 \sim \mathcal{N}(\mu_1+\Sigma_{12}\Sigma_{12}^{-1}(Y_2-\mu_2),
-				\Sigma_{11}-\Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21})
+				\Sigma_{11}-\Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21})\\
+				\Sigma_{12}^{T} = \Sigma_{21}
+				
 $$
 
 - For here it's just bivariate case:  
@@ -315,3 +318,53 @@ $$
 
 ### 5 EKF
 
+- ####5.a
+
+  ![](./ekf_figure/ekf_a.png)
+
+- ####5.b
+
+  - Because of larger varince, it becomes harder to have a good estimation.
+
+  ![](./ekf_figure/ekf_b.png)
+
+- ####5.c
+
+  - the mean doesn't change much, because the data factor is alwayas 1, that's not very noisy.  It's not hard for our model to track the real motion.
+  - anees is bad when variance if very low, because anees have a term $\Sigma^{-1}​$, which will be very large when variance is low.
+
+  ![](./ekf_figure/ekf_c.png)
+
+### 6 PF
+
+- #### 6.a
+
+  ![](./pf_figure/pf_a.png)
+
+- #### 6.b
+
+    - Just like 5.b, when the varience become larger, the noise of the real motion is too large to have a good estimation, that's why it shoots up.
+
+    ![](./pf_figure/pf_b.png)
+
+    
+
+- #### 6.c 
+
+    - when the variance is very low, which means the sensor is too accurate, that's not a good thing. it reduce the diversity.
+
+    ![](./pf_figure/pf_c_anees.png)
+
+    ![](./pf_figure/pf_c_mean.png)
+
+    
+
+- #### 6.d 
+
+  - samll num of particles is not a good estimator of real motion
+
+  ![](./pf_figure/pf_d_anees.png)
+
+  ![](./pf_figure/pf_d_mean.png)
+
+  
