@@ -8,7 +8,6 @@ import policies
 from ekf import ExtendedKalmanFilter
 from pf import ParticleFilter
 
-
 def localize(env, policy, filt, x0, num_steps, plot=False):
     # Collect data from an entire rollout
     states_noisefree, states_real, action_noisefree, obs_noisefree, obs_real = \
@@ -102,6 +101,8 @@ def setup_parser():
 
     return parser
 
+def plot_b():
+    for i in range(10):
 
 if __name__ == '__main__':
     args = setup_parser().parse_args()
@@ -140,3 +141,4 @@ if __name__ == '__main__':
 
     # You may want to edit this line to run multiple localization experiments.
     localize(env, policy, filt, initial_mean, args.num_steps, args.plot)
+    plot_b()

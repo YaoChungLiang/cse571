@@ -16,7 +16,7 @@ if __name__ == "__main__":
 	y = pc(x)
 	plt.plot(x,y)
 	plt.title("bayes rule")
-	plt.xlabel("c")
-	plt.ylabel("$p(x_{t+1}=clean)$")
+	plt.xlabel("$p(x_{t+1}=clean)$")
+	plt.ylabel("$p(x_{t+1}=clean|z_{t+1}=clean)$")
 	plt.show()	
 	
