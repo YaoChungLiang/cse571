@@ -15,6 +15,7 @@ def main(planning_env, planner, start, goal):
     raw_input('Press any key to begin planning')
 
     # Plan.
+    start,goal = tuple(start),tuple(goal)
     plan = planner.Plan(start, goal)
 
     # Shortcut the path.
@@ -24,8 +25,7 @@ def main(planning_env, planner, start, goal):
 
     # Visualize the final path.
     planning_env.visualize_plan(plan)
-    embed()
-
+    # embed()
 
 if __name__ == "__main__":
     
@@ -55,5 +55,14 @@ if __name__ == "__main__":
         exit(0)
 
     print("start config:", args.start)
-
+    # nargs = + will transform muti inputs into a list
     main(planning_env, planner, args.start, args.goal)
+
+
+# $ python run.py -m map1.txt -p astar -s 321 148 -g 106 202
+
+
+
+
+
+
