@@ -1,0 +1,275 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{titling}
+\title{State Estimation}
+\preauthor{}
+\author{}
+\postauthor{}
+\predate{}
+\date{}
+\postdate{}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{parskip}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usepackage{verbatim}
+
+\newcommand{\deriv}[2]{\frac{d #1}{d #2}}
+\newcommand{\pderiv}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\?}{\stackrel{?}{=}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+
+\renewcommand{\thesubsection}{\arabic{subsection}}
+\setcounter{subsection}{-1}
+
+
+\begin{document}
+\maketitle
+
+\section*{Submission Guidelines}
+
+Writeups must be submitted as a PDF via Gradescope.
+\LaTeX{} is preferred, but other typesetting methods are acceptable.
+Code for the programming component must be submitted in a zip archive via Canvas.
+Plots generated as part of the programming component should be included in the writeup.
+
+
+\subsection{Collaborators}
+
+List the names of all collaborators and which questions you collaborated on.
+
+
+\subsection{Bayes Rule (5 points)}
+
+A vacuum cleaning robot is equipped with a cleaning unit to clean the floor.
+The robot has a binary sensor that detects whether a floor tile is clean or dirty.
+However, neither the cleaning unit nor the sensor are perfect;
+from previous experience, you know the robot successfully cleans a dirty tile with probability
+\begin{align*}
+  p(x_{t+1} = \text{clean} | x_{t} = \text{dirty}) &= 0.6
+\end{align*}
+where $x_t$ is the state of the floor tile at time $t$ and $x_{t+1}$ is the resulting state after the cleaning unit has been activated.
+Activating the cleaning unit when the tile is clean will never make it dirty.
+
+The probability that the sensor indicates that the tile is clean when it is actually dirty is $p(z = \text{clean} | x = \text{dirty}) = 0.2$.
+The probability that the sensor correctly detects a clean tile is given by $p(z = \text{clean} | x = \text{clean}) = 0.6$.
+
+You have no knowledge about the true state of the floor tile, except that after cleaning the tile, the robot's sensor indicates that it is clean.
+Compute the probability that the floor tile is now clean, assuming that the prior distribution at time $t$ is $p(x_t = \text{clean}) = c$.
+Then, plot $p(x_{t+1} = \text{clean})$ for $0 \leq c \leq 1$.
+
+\clearpage
+
+\subsection{Correlated Noise (15 points)}
+
+The Kalman filter formulation assumes independent additive Gaussian noise in the transition and observation model.
+However, this assumption may not hold in many practical situations.
+Consider the following uncontrolled system:
+\begin{align*}
+  x_0 &\sim \mathcal{N}(\mu_0, \Sigma_0) \\
+  x_{t+1} &= A x_t + w_t \\
+  w_{t} &= 0.1 w_{t-1} + 0.2 w_{t-2} + p_{t-1} \\
+  p_t &\sim \mathcal{N}(0, \Sigma_{pp}) \\
+  z_t &= Cx_t + v_t \\
+  v_t &= 0.8 v_{t-1} + q_{t-1} \\
+  q_t &\sim \mathcal{N}(0, \Sigma_{qq}) \\
+  p_{-1} &= q_{-1} = v_{-1} = w_{-1} = w_{-2} = 0
+\end{align*}
+Describe a new state representation, transition model, and observation model such that the problem can be transformed into the standard uncorrelated noise Kalman filtering setup.
+
+
+\subsection{Gaussian Conditioning (20 points)}
+
+Let $X$ and $Y$ denote two random variables that are jointly Gaussian:
+\begin{align*}
+  p(x, y)
+  &= \mathcal{N}(\mu_{XY}, \Sigma_{XY}) \\
+  &= \frac{1}{2 \pi |\Sigma_{XY}|^{1/2}}
+    \exp \left\{ -\frac{1}{2} ((x, y)^\top - \mu_{XY})^\top \Sigma_{XY}^{-1} ((x, y)^\top - \mu_{XY}) \right\}
+\end{align*}
+where $\mu_{XY} = (\mu_{X}, \mu_{Y})^\top$ and
+$\Sigma = \begin{psmallmatrix} \sigma_X^2 & \sigma_{XY}^2 \\ \sigma_{XY}^2 & \sigma_Y^2 \end{psmallmatrix}$.
+
+\bigskip
+Prove that the conditional distribution $p(x|y)$ is also Gaussian:
+\begin{align*}
+  p(x|y)
+  &= \mathcal{N}(\mu_{X|Y}, \sigma_{X|Y}^2)
+    = \frac{1}{\sqrt{2\pi}\sigma_{X|Y}} \exp \left\{ -\frac{1}{2} \frac{(x - \mu_{X|Y})^2}{\sigma_{X|Y}^2} \right\}
+\end{align*}
+where $\mu_{X|Y} = \mu_{X} + \frac{\sigma_{XY}^2}{\sigma_{Y}^2} (y - \mu_{Y})$ and
+$\sigma_{X|Y}^2 = \sigma_X^2 - \frac{\sigma_{XY}^4}{\sigma_Y^2}$.
+
+\subsubsection*{Hints and Reminders}
+\begin{itemize}
+\item Use the definition of the conditional distribution and complete the square
+\item Since $p(x, y)$ is jointly Gaussian, the marginal distribution of $y$ is
+  also Gaussian: $p(y) = \mathcal{N}(\mu_{Y}, \sigma_{Y}^2)$
+\item For $2 \times 2$ invertible matrix
+  $A = \begin{psmallmatrix} a & b \\ c & d \end{psmallmatrix}$,
+  $A^{-1} = \frac{1}{|A|} \begin{psmallmatrix} d & -c \\ -b &
+    a \end{psmallmatrix}$ and $|A| = ad - bc$.
+\end{itemize}
+
+
+\section*{Landmark-Based Localization}
+
+\begin{figure}[!h]
+\centering
+\input{figs/motion-model.tikz}
+\caption{Odometry-based motion model}
+\label{fig:motion-model}
+\end{figure}
+
+In the programming component of this assignment, you will implement an Extended Kalman Filter (EKF) and Particle Filter (PF) for localizing a robot based on landmarks.
+The state of the robot is its 2D position and orientation: $(x, y, \theta)$.
+We will use the odometry-based motion model in Figure~\ref{fig:motion-model}
+(i.e. the robot rotates by $\delta_{rot1}$, drives straight forward $\delta_{trans}$, then rotates again by $\delta_{rot2}$).
+We assume that there are landmarks present in the robot's environment.
+The robot receives the bearings (angles) to the landmarks and the ID of the landmarks as observations: $(\text{bearing}, \text{landmark ID})$.
+
+We assume a noise model for the odometry motion model with parameters $\alpha$ (PR Table 5.6) and a separate noise model for the bearing observations with parameter $\beta$ (PR Section 6.6).
+The landmark ID observation is noise-free.
+See the provided starter code for implementation details.
+
+At each timestep, the robot starts from the current state and moves according to the control input.
+The robot then receives a landmark observation from the world.
+You will use this information to localize the robot over the whole time sequence with an EKF and PF.
+
+
+\subsection{Linearized Motion Model (10 points)}
+
+The EKF prediction step uses a linearized approximation of a nonlinear motion model $g$ around the current mean of the state distribution $\mu$ and control $u$.
+Derive the Jacobians with respect to the mean $G = \pderiv{g}{\mu}$ and control $V = \pderiv{g}{u}$.
+\begin{align*}
+  G = \begin{pmatrix}
+    \pderiv{x'}     {x} & \pderiv{x'}     {y} & \pderiv{x'}     {\theta} \\
+    \pderiv{y'}     {x} & \pderiv{y'}     {y} & \pderiv{y'}     {\theta} \\
+    \pderiv{\theta'}{x} & \pderiv{\theta'}{y} & \pderiv{\theta'}{\theta} \\
+  \end{pmatrix}\qquad
+  V = \begin{pmatrix}
+    \pderiv{x'}     {\delta_{rot1}} & \pderiv{x'}     {\delta_{trans}} & \pderiv{x'}     {\delta_{rot2}} \\
+    \pderiv{y'}     {\delta_{rot1}} & \pderiv{y'}     {\delta_{trans}} & \pderiv{y'}     {\delta_{rot2}} \\
+    \pderiv{\theta'}{\delta_{rot1}} & \pderiv{\theta'}{\delta_{trans}} & \pderiv{\theta'}{\delta_{rot2}} \\
+  \end{pmatrix}
+\end{align*}
+
+
+\subsection*{Code Overview}
+
+The starter code is written in Python and depends on NumPy and Matplotlib.
+This section gives a brief overview of each file.
+
+\begin{itemize}
+\item \verb|localization.py| -- This is your main entry point for running experiments.
+\item \verb|soccer_field.py| -- This implements the dynamics and observation functions, as well as the noise models for both.
+\item \verb|utils.py| -- This contains assorted plotting functions, as well as a useful function for normalizing an angle between $[-\pi, \pi]$.
+\item \verb|policies.py| -- This contains a simple policy, which you can safely ignore.
+\item \verb|ekf.py| -- Add your extended Kalman filter implementation here!
+\item \verb|pf.py| -- Add your particle filter implementation here!
+\end{itemize}
+
+\textbf{Command-Line Interface}
+
+To visualize the robot in the soccer field environment, run
+\begin{verbatim}
+$ python localization.py --plot none
+\end{verbatim}
+The blue line traces out the robot's position, which is a result of noisy actions.
+The green line traces the robot's position assuming that actions weren't noisy.
+After you implement a filter, the filter's estimate of the robot's position will be drawn in red.
+\begin{verbatim}
+$ python localization.py --plot ekf
+$ python localization.py --plot pf
+\end{verbatim}
+To see other command-line flags available to you, run
+\begin{verbatim}
+$ python localization.py -h
+\end{verbatim}
+
+\textbf{Data Format}
+
+\begin{itemize}
+\item state: $[x, y, \theta]$
+\item control: $[\delta_{rot1}, \delta_{trans}, \delta_{rot2}]$
+\item observation: $[\theta_{bearing}]$
+\end{itemize}
+
+\textbf{Hints}
+
+\begin{itemize}
+\item
+Make sure to call \verb|utils.minimized_angle| any time an angle or angle difference could exceed $[-\pi, \pi]$.
+\item
+Make sure to use the low-variance systematic sampler from lecture.
+It gives you a smoother particle distribution and also requires only a single random number per resampling step.
+\item
+Turn off plotting for a significant speedup.
+\end{itemize}
+
+\clearpage
+
+\subsection{EKF Implementation (25 points)}
+
+Implement the extended Kalman filter algorithm in \texttt{ekf.py}.
+You will need to fill in \verb|ExtendedKalmanFilter.update| and the \verb|Field| methods \verb|G|, \verb|V|, and \verb|H|.
+Your results from a successful EKF implementation should be comparable to the following results.
+\begin{verbatim}
+$ python localization.py ekf --seed 0
+...
+Mean position error: 8.9983675360847
+Mean Mahalanobis error: 4.416418248584298
+ANEES: 1.472139416194766
+\end{verbatim}
+
+\begin{enumerate}[(a)]
+\item Plot the real robot path and the filter path under the default (provided)
+  parameters.
+\item Plot the mean position error as the $\alpha$ and $\beta$ factors
+  range over $r = [1/64,$ $1/16, 1/4, 4, 16, 64]$\footnote{
+  Since the factors are multiplied with variances, this is between 1/8 and 8 times the default noise values.}
+  and discuss anything interesting you observe.
+
+  You should run 10 trials per value of $r$. One run might look something like:
+\begin{verbatim}$ python localization.py ekf --data-factor 4 --filter-factor 4\end{verbatim}
+\item Plot the mean position error and ANEES (average normalized estimation error squared)
+  as the filter $\alpha, \beta$ factors vary over $r$ (as above) while the data is generated with the
+  default. Discuss anything interesting you observe.
+\end{enumerate}
+
+
+\subsection{PF Implementation (25 points)}
+
+Implement the particle filter algorithm in \texttt{pf.py}.
+You will need to fill in \verb|ParticleFilter.update| and \verb|ParticleFilter.resample|.
+\begin{verbatim}
+$ python localization.py pf --seed 0
+...
+Mean position error: 8.567264372950905
+Mean Mahalanobis error: 14.742252771106532
+ANEES: 4.914084257035511
+\end{verbatim}
+
+\begin{enumerate}[(a)]
+\item Plot the real robot path and the filter path under the default
+  parameters.
+\item Plot the mean position error as the $\alpha, \beta$ factors
+  range over $r$ and discuss.
+\item Plot the mean position error and ANEES as the filter $\alpha, \beta$ factors
+  vary over $r$ while the data is generated with the default.
+\item Plot the mean position error and ANEES as the $\alpha, \beta$ factors
+  range over $r$ and the number of particles varies over $[20, 50, 500]$.
+\end{enumerate}
+
+\end{document}

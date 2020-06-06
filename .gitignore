@@ -1,4 +1,8 @@
-*.pyc
-__pycache__
-.DS_Store
-auto_commit.sh
+*.pdf
+*.zip
+*.docx
+*.xlsx
+LQR
+slides
+*.rar
+CSE571_hw1
